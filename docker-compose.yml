@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: cicd-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:7
+    container_name: cicd-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./server
+    container_name: cicd-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/cicd_visualizer
+    depends_on:
+      - mongodb
+      - redis
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  nginx:
+    image: nginx:alpine
+    container_name: cicd-nginx
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./server/src/nginx/configs:/etc/nginx/conf.d
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
