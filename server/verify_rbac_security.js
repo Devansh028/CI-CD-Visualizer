@@ -225,6 +225,8 @@ function cleanup() {
     server.close();
   }
   mongoose.disconnect();
+  // Terminate process to stop background BullMQ queue reconnect polling
+  process.exit(0);
 }
 
 run().catch(err => {
